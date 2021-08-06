@@ -1,12 +1,14 @@
 import inspect
+from pytz import timezone
 from datetime import datetime, timedelta
+from core.exceptions import NotificationArgumentException, KeywordArgumentException
 
 notifications = []
 
 class Notification():
 
-    def __init__(self, func_run, first_run_datetime, delta_time, toggle_command):
-        self.enabled = True
+    def __init__(self, func_run, enabled, first_run_datetime, delta_time, toggle_command):
+        self.enabled = enabled
         self.func_run = func_run
         self.next_run_datetime = first_run_datetime
         self.delta_time = delta_time
@@ -34,7 +36,8 @@ class Notification():
 
 def on_loop_notif_check():
     notif_out = []
-    c_time = datetime.now()
+    tz = timezone(config.default_timezone)
+    c_time = tz.fromutc(datetime.now())
     for notif in notifications:
         notif_append = notif.get_message_return(c_time)
         if notif_append is not None:
@@ -44,6 +47,7 @@ def on_loop_notif_check():
 def notification_factory(**kwargs):
 
     notification_default_setting = {
+        'enabled': True,
         'first_run': datetime.now() + timedelta(minutes=5),
         'delta': timedelta(hours=1),
         'toggle_command': None
@@ -52,14 +56,21 @@ def notification_factory(**kwargs):
     for k, v in notification_default_setting.items():
         kwargs.setdefault(k, v)
 
-    assert kwargs['toggle_command'] is not None
-
     def notification_cmd(func):
         assert callable(func)
         func_params = inspect.getfullargspec(func)
-        assert len(func_params[0]) == 0
+        if len(func_params[0]) != 0:
+            raise NotificationArgumentException(func)
 
-        notifications.append(Notification(func, kwargs['first_run'], kwargs['delta'], kwargs['toggle_command']))
+        exclude_kwarg_check = ['toggle_command']
+
+        for arg in kwargs.keys():
+            if not isinstance(notification_default_setting[arg], type(kwargs[arg])) and arg not in exclude_kwarg_check:
+                giv = str(type(kwargs[arg]))
+                exp = str(type(notification_default_setting[arg]))
+                raise KeywordArgumentException(func, arg, giv, exp)
+
+        notifications.append(Notification(func, kwargs['enabled'], kwargs['first_run'], kwargs['delta'], kwargs['toggle_command']))
 
         return func
 

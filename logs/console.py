@@ -10,7 +10,7 @@ NOTIFICATION = (Back.GREEN, "NOTIFICATION")
 NAVIGATION = (Fore.CYAN, "NAV")
 ELEMENT_FIND = (Fore.CYAN, "ELEM_FIND")
 START = (Fore.CYAN, "START")
-QUIT = (Fore.CYAN, "QUIT")
+QUIT = (Fore.LIGHTCYAN_EX, "QUIT")
 
 def log(type, message):
     assert isinstance(type, tuple) and len(type) == 2

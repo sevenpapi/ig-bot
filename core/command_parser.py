@@ -1,5 +1,5 @@
-from CONSTANTS import command_prefix, builtin_commands
-from core.command_factory import prefixless_commands, command_key, builtin_command_key
+from config import command_prefix, builtin_commands
+from core.command_factory import command_key, builtin_command_key, prefixless_commands
 assert not any(c.isspace() for c in command_prefix)
 
 def msg_parser(msg): # None means no response
@@ -14,11 +14,10 @@ def msg_parser(msg): # None means no response
             return command_key[no_prefix_command](msg)
         if no_prefix_command in builtin_commands.values():
             return builtin_command_key[no_prefix_command](msg)
-    for custom in prefixless_commands:
-        potential_out = custom(msg)
-        if potential_out is not None:
-            return potential_out
     return None
+
+def prefixless_parser(msg):
+    return [func(msg) for func in prefixless_commands if func(msg) is not None]
 
 def do_message_response(msg):
     splitted_message = msg.content.split()
